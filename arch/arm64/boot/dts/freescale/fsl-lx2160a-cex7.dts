@@ -94,6 +94,15 @@ I2C switch -
 				#cooling-cells = <2>;
 			};
 		};
+		i2c@2 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x2>;
+			ltc3882@5c {
+				compatible = "ltc3882";
+				reg = <0x5c>;
+			};
+		};
 		i2c@3 {
 			#address-cells = <1>;
 			#size-cells = <0>;
