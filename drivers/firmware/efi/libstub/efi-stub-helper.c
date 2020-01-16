@@ -51,6 +51,23 @@ bool __pure __efi_soft_reserve_enabled(void)
 	return !efi_nosoftreserve;
 }
 
+static int uart8250_can_tx_byte(unsigned int base_port)
+{
+          return inb(base_port + 5) & 0x20;
+}
+
+static void putc(unsigned char data, unsigned int base_port)
+{
+          unsigned long int i = 1000;
+                  while (i-- && !uart8250_can_tx_byte(base_port));
+                          outb(data, base_port);
+}
+
+static void puts(char* str)
+{
+          while(*str)
+              putc(*str++, 0x3f8);
+}
 #define EFI_MMAP_NR_SLACK_SLOTS	8
 
 struct file_info {
@@ -885,16 +902,22 @@ efi_status_t efi_exit_boot_services(efi_system_table_t *sys_table_arg,
 {
 	efi_status_t status;
 
+        puts("before efi_get_memory_map\n");
 	status = efi_get_memory_map(sys_table_arg, map);
+        puts("after efi_get_memory_map\n");
 
 	if (status != EFI_SUCCESS)
 		goto fail;
 
+        puts("before priv_func\n");
 	status = priv_func(sys_table_arg, map, priv);
+        puts("after priv_func\n");
 	if (status != EFI_SUCCESS)
 		goto free_map;
 
-	status = efi_call_early(exit_boot_services, handle, *map->key_ptr);
+        puts("before exit_boot_services\n");
+	//status = efi_call_early(exit_boot_services, handle, *map->key_ptr);
+        puts("after exit_boot_services\n");
 
 	if (status == EFI_INVALID_PARAMETER) {
 		/*

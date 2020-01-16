@@ -41,6 +41,24 @@ static void setup_boot_services##bits(struct efi_config *c)		\
 BOOT_SERVICES(32);
 BOOT_SERVICES(64);
 
+static int uart8250_can_tx_byte(unsigned int base_port)
+{
+          return inb(base_port + 5) & 0x20;
+}
+
+static void putc(unsigned char data, unsigned int base_port)
+{
+          unsigned long int i = 1000;
+                  while (i-- && !uart8250_can_tx_byte(base_port));
+                          outb(data, base_port);
+}
+
+static void puts(char* str)
+{
+          while(*str)
+              putc(*str++, 0x3f8);
+}
+
 void efi_char16_printk(efi_system_table_t *table, efi_char16_t *str)
 {
 	efi_call_proto(efi_simple_text_output_protocol, output_string,
@@ -511,6 +529,7 @@ static void add_e820ext(struct boot_params *params,
 static efi_status_t
 setup_e820(struct boot_params *params, struct setup_data *e820ext, u32 e820ext_size)
 {
+        putc('K', 0x3f8);
 	struct boot_e820_entry *entry = params->e820_table;
 	struct efi_info *efi = &params->efi_info;
 	struct boot_e820_entry *prev = NULL;
@@ -518,14 +537,27 @@ setup_e820(struct boot_params *params, struct setup_data *e820ext, u32 e820ext_s
 	u32 nr_desc;
 	int i;
 
+        putc('Q', 0x3f8);
 	nr_entries = 0;
+        putc('F', 0x3f8);
+        if (efi->efi_memmap_size ==0) {
+                puts("efi_memmap_size is 0");
+        }
+        if (efi->efi_memdesc_size ==0) {
+                putc('U', 0x3f8);
+        }
 	nr_desc = efi->efi_memmap_size / efi->efi_memdesc_size;
 
+        putc('C', 0x3f8);
+        if (nr_desc == 0) {
+                putc('K', 0x3f8);
+        }
 	for (i = 0; i < nr_desc; i++) {
 		efi_memory_desc_t *d;
 		unsigned int e820_type = 0;
 		unsigned long m = efi->efi_memmap;
 
+                putc('P', 0x3f8);
 #ifdef CONFIG_X86_64
 		m |= (u64)efi->efi_memmap_hi << 32;
 #endif
@@ -717,20 +749,24 @@ static efi_status_t exit_boot(struct boot_params *boot_params, void *handle)
 	priv.boot_params	= boot_params;
 	priv.efi		= &boot_params->efi_info;
 
+        putc('A', 0x3f8);
 	status = allocate_e820(boot_params, &e820ext, &e820ext_size);
 	if (status != EFI_SUCCESS)
 		return status;
 
+        putc('B', 0x3f8);
 	/* Might as well exit boot services now */
 	status = efi_exit_boot_services(sys_table, handle, &map, &priv,
 					exit_boot_func);
 	if (status != EFI_SUCCESS)
 		return status;
 
+        putc('C', 0x3f8);
 	/* Historic? */
 	boot_params->alt_mem_k	= 32 * 1024;
 
 	status = setup_e820(boot_params, e820ext, e820ext_size);
+        putc('D', 0x3f8);
 	if (status != EFI_SUCCESS)
 		return status;
 
@@ -832,6 +868,14 @@ efi_main(struct efi_config *c, struct boot_params *boot_params)
 		hdr->code32_start = bzimage_addr;
 	}
 
+        putc('\n', 0x3f8);
+        putc('0', 0x3f8);
+        putc('x', 0x3f8);
+        for (int i = 0; i<16; i++) {
+          int val = ((uint64_t)(&boot_params->efi_info) >> (4*(15-i))) & 0xf;
+          putc("0123456789ABCDEF"[val], 0x3f8);
+        }
+        putc('\n', 0x3f8);
 	status = exit_boot(boot_params, handle);
 	if (status != EFI_SUCCESS) {
 		efi_printk(sys_table, "exit_boot() failed!\n");
