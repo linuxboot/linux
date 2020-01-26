@@ -81,7 +81,27 @@ I2C switch -
 		reg = <0x77>;
 		#address-cells = <1>;
 		#size-cells = <0>;
-
+		i2c@0 {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			reg = <0x0>;
+			24aa512@50 {
+				compatible = "atmel,24c512";
+				reg = <0x50>;
+			};
+			spd1@51 {
+				compatible = "atmel,spd";
+				reg = <0x51>;
+			};
+			spd2@53 {
+				compatible = "atmel,spd";
+				reg = <0x53>;
+			};
+			m24c02@57 {
+				compatible = "atmel,24c02";
+				reg = <0x57>;
+			};
+		};
 		i2c@1 {
 			#address-cells = <1>;
 			#size-cells = <0>;
