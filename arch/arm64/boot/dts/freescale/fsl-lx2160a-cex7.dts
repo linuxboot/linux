@@ -177,6 +177,16 @@ I2C switch -
 		spi-rx-bus-width = <8>;
 		spi-tx-bus-width = <1>;
 	};
+	flash1: w25q32@1 {
+                #address-cells = <1>;
+                #size-cells = <1>;
+                compatible = "st,w25q32";
+                spi-max-frequency = <10000000>;
+                reg = <1>;
+                spi-rx-bus-width = <1>;
+                spi-tx-bus-width = <1>;
+        };
+
 };
 
 &uart0 {
