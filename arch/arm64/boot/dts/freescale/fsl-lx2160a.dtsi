@@ -994,6 +994,7 @@
 			snps,dis_rxdet_inp3_quirk;
 			snps,incr-burst-type-adjustment = <1>, <4>, <8>, <16>;
 			snps,host-vbus-glitches;
+			snps,parkmode-disable-ss-quirk;
 			dma-coherent;
 			status = "disabled";
 		};
@@ -1009,6 +1010,7 @@
 			snps,dis_rxdet_inp3_quirk;
 			snps,incr-burst-type-adjustment = <1>, <4>, <8>, <16>;
 			snps,host-vbus-glitches;
+			snps,parkmode-disable-ss-quirk;
 			dma-coherent;
 			status = "disabled";
 		};
